@@ -80,6 +80,19 @@ Airprobe is a tool that was used to analyse GSM signals a while back. It no long
 \caption{Blocks of GSM Analysis Tool \label{fig:3}}
 \end{figure}
 
+\subsection{FCCH Burst Detection with adaptive filter}
+Martin Braun (martin.braun@ettus.com) suggests a paper \cite{1404796} which introduced an algorithm for FCCH burst detection. The algorithm uses an adaptive filter to help distinguishing FCCH bursts from other bursts. I have implemented this algorithm for test and upload to my github : \url{https://github.com/hzhua/gr-fchdetection}.
+As after GMSK modulation, the frequency correction bits is a sinusoid of frequency 67.7033KHz. The normal bursts at base-band are 100KHz.
+Therefore, I used a FIR low pass filter with 70KHz pass band and 10KHz transition band. With the help of adaptive filter, it can detect
+the FCCH burst fast and accurately. Figure \ref{fig:fch} shows the ratio of average error power to input power. The average error is very low
+at frequency burst and high at other bursts. A threshold can be easily find to separate two parts.
+
+\begin{figure}[!h]
+\centering\includegraphics[width=5.4in]{figure/fcch_detect.png}
+\caption{FCCH detected by an adaptive filter\label{fig:fch}}
+\end{figure}
+
+
 \subsection{Improving the performance of frequency correlation}
 
 As Piot Krysik (perper@o2.pl) said, there is instability in the method of correction of the frequency offset in Airprobe. The reason is the lack of synchronization between computation of frequency offset and its correction inside of FIR filter. As Piot suggests, I will use stream tags to solve this problem.
