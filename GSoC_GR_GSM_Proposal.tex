@@ -17,7 +17,7 @@
 \tableofcontents
 \newpage
 \section{Introduction}
-GSM (Global System for Mobile Communications) is the most used standard in mobile communication. GNU Radio is a free software development toolkit that provides the signal processing runtime and processing blocks to implement software radios using readily-available, low-cost external RF hardware and commodity processors.\cite{gnuradio} This proposal addresses ideas to create an out of tree module for GNU Radio to decode GSM signals as suggested by Sylvain Munaut. Section 2 is the general description of the GSM physical layer as this project mainly focuses on decoding GSM signal. Section 3 is the deliverables. 
+GSM (Global System for Mobile Communications) is the most used standard in mobile communication. GNU Radio is a free software development toolkit that provides the signal processing runtime and processing blocks to implement software radios using readily-available, low-cost external RF hardware and commodity processors.\cite{gnuradio} This proposal addresses ideas to create an out of tree module for GNU Radio to decode GSM signals as suggested by Sylvain Munaut. Section 2 is the general description of the GSM physical layer as this project mainly focuses on decoding GSM signal. Section 3 is the deliverables.
 A rough project schedule is given in Section 4. Section 5 are the expanding tasks I plan to do after GSoC'14. My personal statements are in Section 6.
 \section{Background of GSM Signal}
 GSM (Global System for Mobile Communications) is a standard developed by the European Telecommunications Standards Institute (ETSI) to describe protocols for the second generation (2G) digital cellular networks used by mobile phones. According to the GSM Association, it is approximated that 80 percent of the world use GSM when placing wireless calls.
@@ -84,13 +84,13 @@ Airprobe is a tool that was used to analyse GSM signals a while back. It no long
 \subsection{FCCH Burst Detection with adaptive filter}
 Martin Braun (martin.braun@ettus.com) suggests a paper \cite{1404796} which introduced an algorithm for FCCH burst detection. The algorithm uses an adaptive filter to help distinguishing FCCH bursts from other bursts. I have implemented this algorithm for test and upload to my github : \url{https://github.com/hzhua/gr-fchdetection}.
 As after GMSK modulation, the frequency correction bits is a sinusoid of frequency 67.7033KHz. The normal bursts at base-band are 100KHz.
-Therefore, I used a FIR low pass filter with 70KHz pass band and 10KHz transition band. With the help of adaptive filter, it can detect
-the FCCH burst fast and accurately. Figure \ref{fig:fch} shows the ratio of average error power to input power. The data is gathered by my R820T with RTL2832U. The average error is very low
+Therefore, I used a FIR band pass filter with center frequency 67.7033KHz with bandwidth of 18KHz. With the help of adaptive filter, it can detect
+the FCCH burst fast and accurately. Figure \ref{fig:fch} shows the average error power of the adaptive filter. The data is gathered by my R820T with RTL2832U. The average error is very low
 at frequency burst and high at other bursts. A threshold can be easily find to separate two parts.
 
 \begin{figure}[!h]
 \centering\includegraphics[width=5.4in]{figure/fcch_detect.png}
-\caption{FCCH detected by an adaptive filter\label{fig:fch}}
+\caption{The average error of the adaptive filter\label{fig:fch}}
 \end{figure}
 
 
