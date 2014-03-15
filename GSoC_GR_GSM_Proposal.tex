@@ -1,11 +1,18 @@
 \documentclass[a4paper,12pt,oneside]{article}
 \usepackage{amsmath,amssymb}
+\usepackage{color}
 \usepackage{listings}
 \usepackage{latexsym}
 \usepackage{pdfpages}
 \usepackage{graphicx}
-\usepackage{url}
 \usepackage[top=1in,bottom=1in,left=1.25in,right=1.25in]{geometry}
+% Allow breaking at both hyphens and spaces
+\usepackage[hyphens,spaces]{url}
+\urlstyle{rm}
+
+% (More aggressive) Any letter and / are treated as breakable characters
+\renewcommand{\UrlBreaks}{\do\/\do\a\do\b\do\c\do\d\do\e\do\f\do\g\do\h\do\i\do\j\do\k\do\l\do\m\do\n\do\o\do\p\do\q\do\r\do\s\do\t\do\u\do\v\do\w\do\x\do\y\do\z\do\A\do\B\do\C\do\D\do\E\do\F\do\G\do\H\do\I\do\J\do\K\do\L\do\M\do\N\do\O\do\P\do\Q\do\R\do\S\do\T\do\U\do\V\do\W\do\X\do\Y\do\Z}
+
 \bibliographystyle{ieeetr}
 \title{GSoC'14:GSM Analysis Tool}
 \date{\today}
@@ -82,7 +89,7 @@ Airprobe is a tool that was used to analyse GSM signals a while back. It no long
 \end{figure}
 
 \subsection{FCCH Burst Detection with adaptive filter}
-Martin Braun (martin.braun@ettus.com) suggests a paper \cite{1404796} which introduced an algorithm for FCCH burst detection. The algorithm uses an adaptive filter to help distinguishing FCCH bursts from other bursts. I have implemented this algorithm for test and upload to my github : \url{https://github.com/hzhua/gr-fchdetection}.
+Martin Braun (martin.braun@ettus.com) suggests a paper \cite{1404796} which introduced an algorithm for FCCH burst detection. The algorithm uses an adaptive filter to help distinguishing FCCH bursts from other bursts. I have implemented this algorithm for test and upload to my github : {\color{blue}\url{https://github.com/hzhua/gr-fchdetection}}.
 As after GMSK modulation, the frequency correction bits is a sinusoid of frequency 67.7033KHz. The normal bursts at base-band are 100KHz.
 Therefore, I used a FIR band pass filter with center frequency 67.7033KHz with bandwidth of 18KHz. With the help of adaptive filter, it can detect
 the FCCH burst fast and accurately. Figure \ref{fig:fch} shows the average error power of the adaptive filter. The data is gathered by my R820T with RTL2832U. The average error is very low
@@ -150,11 +157,11 @@ I'm a fourth year undergraduate in Electronic Information Engineering of Univers
 
 I got to know GNU Radio when I read a paper on cognitive radio which using GNU Radio and a USRP to analyse the algorithm in their paper. Then we bought a USRP to help our group in the research of cognitive radio. My easy access to USRP will help me in finishing the coding of GSM Analysis Tool.\\
 
-On my coding experience, I was an intern in the Alibaba Group which is the biggest e-commerce company in China. I finished 60 percent codes of a Java project called Beacon. It uses Solr as searching engine to catch illegal users. My work was to optimize the searching engine and the coding of the back end. Unfortunately, the codes are under confidential. I also contributed my codes to an Open Source project SNSAPI (it is a Chinese project). You can find it in my github page: \url{https://github.com/hzhua/snsapi}.\\
+On my coding experience, I was an intern in the Alibaba Group which is the biggest e-commerce company in China. I finished 60 percent codes of a Java project called Beacon. It uses Solr as searching engine to catch illegal users. My work was to optimize the searching engine and the coding of the back end. Unfortunately, the codes are under confidential. I also contributed my codes to an Open Source project SNSAPI (it is a Chinese project). You can find it in my github page: {\color{blue}\url{https://github.com/hzhua/snsapi}}.\\
 
 As this is the biggest project I have dealt with, it may be a challenging task for me to complete in the given time span. If I cannot finish GSM Analysis Tool in 14 weeks, I will continue my works even after GSoC. For my personal motivation, I will continue my research on wireless networks during my PhD degree. Therefore I will use GNU Radio and USRP as powerful tools for many years. I would love to continue learning and working in GNU Radio community after GSoC. So, don't worry about if I will disappear during GSoC.\\
 
-If you want to know me better, please visit my personal page \url{https//hzhua.github.io}. You can find my CV there.
+Please visit my personal page {\color{blue}{\url{https://hzhua.github.io}}} if you want to know me better. You can find my CV there.
 
 I agree for my work to be published under the GPL license.
 
