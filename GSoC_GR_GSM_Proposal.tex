@@ -101,7 +101,7 @@ Figure \ref{fig:3} shows the flow graph and state machine of GSM Analysis Tool r
 \subsection{FCCH Burst Detection with adaptive filter}
 Martin Braun (martin.braun@ettus.com) suggests a paper \cite{1404796} which introduced an algorithm for FCCH burst detection. The algorithm uses an adaptive filter to help distinguishing FCCH bursts from other bursts. I have implemented this algorithm for test and upload to my github : {\color{blue}\url{https://github.com/hzhua/gr-fchdetection}}.
 As after GMSK modulation, the frequency correction bits is a sinusoid of frequency 67.7033KHz. The normal bursts at base-band are 100KHz.
-Therefore, I used a FIR band pass filter with center frequency 67.7033KHz with bandwidth of 18KHz. With the help of adaptive filter, it can detect
+Therefore, I used a FIR band pass filter with center frequency of 67.7033KHz and bandwidth of 18KHz. With the help of adaptive filter, it can detect
 the FCCH burst fast and accurately. Figure \ref{fig:fch} shows the average error power of the adaptive filter. The data is gathered by my R820T with RTL2832U. The average error is very low
 at frequency burst and high at other bursts. A threshold can be easily find to separate two parts.
 
@@ -128,27 +128,25 @@ further analysis.
 \subsection{The Deliverables list}
 \begin{itemize}
 \item Deliverable 0: Create on out-of-tree module for GSM analysis tool (gr-gsm), using gr-modtool;
-\item Deliverable 1: Get properly channelized / resampled data;
+\item Deliverable 1: Data capturing, channelization and resampling with real-time ability;
 \item Deliverable 2: A Flow Control is completed to control the overall state;
-\item Deliverable 2: Find frequency correction burst (FB) and synchronization burst (SB). Then realize frequency and time synchronization;
-\item Deliverable 3: Decode and decrypt the downlink of 26-frame multiframes for the traffic channel (TCH);
-\item Deliverable 4: Decode and decrypt the downlink of 51-frame multiframes for 5 types of control channels (BCCH, CCCH, SDCCH, ACCH and SCH);
-\item Deliverable 6: Integrate all parts with real-time capabilities.
+\item Deliverable 3: Find frequency correction burst (FB) and synchronization burst (SB). Then realize frequency and time synchronization;
+\item Deliverable 4: Decode and decrypt the downlink of 26-frame multiframes for the traffic channel (TCH);
+\item Deliverable 5: Decode and decrypt the downlink of 51-frame multiframes for 5 types of control channels (BCCH, CCCH, SDCCH, ACCH and SCH);
 \end{itemize}
 
 \section{Schedule}
 As the schedule of GSoC'14 shows, there are 14 weeks including midterm evaluation and final evaluations. This schedule is a rough plan which may change after discussions with the mentor. The timeline is structured as follows:
 \begin{itemize}
 \item \textbf{1st Phase (2 weeks)} : Initial discussions with the mentor. Learn how to write an out-of-tree module of GNU Radio. Learn protocol details of GSM.
-\item \textbf{2nd Phase (1 week)} : OOT module is created. Data capturing is coded. Flow control is coded.
+\item \textbf{2nd Phase (1 week)} : OOT module is created. Data capturing, channelization and resampling is coded. Flow control is coded.
 \item \textbf{3rd Phase (1 week)} : Frequency synchronization and GMSK demodulator is coded.
-\item \textbf{4rd Phase (1 week)} : Decoding of convolution codes is implemented.
-\item \textbf{5rd Phase (1 week)} : Decoding of SCH is finished. Time synchronization is also implemented.
+\item \textbf{4th Phase (1 week)} : Decoding of convolution codes is implemented.
+\item \textbf{5th Phase (1 week)} : Decoding of SCH is finished. Time synchronization is also implemented.
 \item \textbf{6th Phase (1 week)} : Mid-term evaluation.
-\item \textbf{7th Phase (2 weeks)} : Decoding of control channel is finished.
-\item \textbf{8th Phase (1 week)} : Decoding of traffic channel is finished.
-\item \textbf{9th Phase (2 weeks)} : Integrate all parts with real-time capabilities.
-\item \textbf{10th Phase (2 weeks)} : QA test, code clean-up, adding documentation and final submission.
+\item \textbf{7th Phase (4 weeks)} : Decoding of control channel and traffic channel is finished.
+\item \textbf{8th Phase (1 week)} : GSM Decoder is finished.
+\item \textbf{9th Phase (2 weeks)} : Buffer period. QA test, code clean-up, adding documentation and final submission.
 
 \end{itemize}
 \section{Future Works}
