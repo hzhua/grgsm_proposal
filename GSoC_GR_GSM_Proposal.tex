@@ -1,6 +1,8 @@
 \documentclass[a4paper,12pt,oneside]{article}
 \usepackage{amsmath,amssymb}
 \usepackage{color}
+\usepackage{algorithmic}
+\usepackage{algorithm}
 \usepackage{listings}
 \usepackage{latexsym}
 \usepackage{pdfpages}
@@ -27,7 +29,7 @@
 GSM (Global System for Mobile Communications) is the most used standard in mobile communication. GNU Radio is a free software development toolkit that provides the signal processing runtime and processing blocks to implement software radios using readily-available, low-cost external RF hardware and commodity processors.\cite{gnuradio} This proposal addresses ideas to create an out of tree module for GNU Radio to decode GSM signals as suggested by Sylvain Munaut. Section 2 is the general description of the GSM physical layer as this project mainly focuses on decoding GSM signal. Section 3 is the deliverables.
 A rough project schedule is given in Section 4. Section 5 are the expanding tasks I plan to do after GSoC'14. My personal statements are in Section 6.
 \section{Background of GSM Signal}
-GSM (Global System for Mobile Communications) is a standard developed by the European Telecommunications Standards Institute (ETSI) to describe protocols for the second generation (2G) digital cellular networks used by mobile phones. According to the GSM Association, it is approximated that 80 percent of the world use GSM when placing wireless calls.
+GSM (Global System for Mobile Communications) is a standard developed by the European Telecommunications Standards Institute (ETSI) to describe protocols for the second generation (2G) digital cellular networks used by mobile phones. According to the GSM Association\cite{gsma}, it is approximated that 80 percent of the world use GSM when placing wireless calls.
 
 \subsection{Multiple access and time slot structure}
 The access scheme of GSM is Time Division Multiple Access (TDMA) with 8 basic physical channels per carrier. The carriers are separated by 200kHz.
@@ -84,40 +86,89 @@ coding(convolutional coding) and then interleaving. More details of channel codi
 \section{Deliverables}
 
 \begin{figure}[!h]
-\centering\includegraphics[width=4.2in]{figure/flowgraph.pdf}
+\centering\includegraphics[width=5.2in]{figure/flowgraph.pdf}
 \caption{Flow Graph of GSM Analysis Tool \label{fig:3}}
 \end{figure}
-Airprobe is a tool that was used to analyse GSM signals a while back. It no longer works with current GNU Radio versions, and doesn't make use of any of the new GNU Radio features. A modular rewrite is the main part of this project.
-Figure \ref{fig:3} shows the flow graph and state machine of GSM Analysis Tool respectively.
-
-
-
-\begin{figure}[!h]
-\centering\includegraphics[width=6.4in]{figure/state_machine.pdf}
-\caption{State Machine of GSM Analysis Tool \label{fig:3}}
-\end{figure}
-
-
-\subsection{FCCH Burst Detection with adaptive filter}
-Martin Braun (martin.braun@ettus.com) suggests a paper \cite{1404796} which introduced an algorithm for FCCH burst detection. The algorithm uses an adaptive filter to help distinguishing FCCH bursts from other bursts. I have implemented this algorithm for test and upload to my github : {\color{blue}\url{https://github.com/hzhua/gr-fchdetection}}.
-As after GMSK modulation, the frequency correction bits is a sinusoid of frequency 67.7033KHz. The normal bursts at base-band are 100KHz.
-Therefore, I used a FIR band pass filter with center frequency of 67.7033KHz and bandwidth of 18KHz. With the help of adaptive filter, it can detect
-the FCCH burst fast and accurately. Figure \ref{fig:fch} shows the average error power of the adaptive filter. The data is gathered by my R820T with RTL2832U. The average error is very low
-at frequency burst and high at other bursts. A threshold can be easily find to separate two parts.
-
 \begin{figure}[!h]
 \centering\includegraphics[width=3.4in]{figure/fcch_detect.png}
 \caption{The average error of the adaptive filter\label{fig:fch}}
 \end{figure}
+Airprobe is a tool that was used to analyse GSM signals a while back. It no longer works with current GNU Radio versions, and doesn't make use of any of the new GNU Radio features. A modular rewrite is the main part of this project.
+Figure \ref{fig:3} and \ref{fig:state} shows the flow graph and state machine of GSM Analysis Tool respectively.
+
+\begin{figure}[!h]
+\centering\includegraphics[width=6.4in]{figure/state_machine.pdf}
+\caption{State Machine of GSM Analysis Tool \label{fig:state}}
+\end{figure}
 
 
-\subsection{Improving the performance of frequency correlation}
+\subsection{Frequency Correlation}
 
-As Piot Krysik (perper@o2.pl) said, there is instability in the method of correction of the frequency offset in Airprobe. The reason is the lack of synchronization between computation of frequency offset and its correction inside of FIR filter. As Piot suggests, I will use stream tags to solve this problem.
+Martin Braun (martin.braun@ettus.com) suggests a paper \cite{1404796} which introduced an algorithm for FCCH burst detection. The algorithm uses an adaptive filter to help distinguishing FCCH bursts from other bursts. \textbf{I have implemented this algorithm for test and uploaded to my github\cite{gitfch}}.
+As after GMSK modulation, the frequency correction bits is a sinusoid of frequency 67.7033KHz. The normal bursts at base-band are 100KHz.
+Therefore, I used a FIR band pass filter with center frequency of 67.7033KHz and bandwidth of 18KHz. With the help of adaptive filter, it can detect
+the FCCH burst fast and accurately. Figure \ref{fig:fch} is the average error calculated by gr-fchdection. The data was gathered by my R820T with RTL2832U. The average error is very low
+at frequency burst and high at other bursts. A threshold can be easily find to separate two parts. 
+
+The frequency difference in FCCH burst can be derived from average phase offset as follow:
+\[
+\delta_i = angle(signal[i]*signal^*[i-1])
+\]
+\[
+\overline{\delta} = \frac{\sum_i {\delta_i}}{N}
+\]
+\[
+f_d = \frac{\overline{\delta} R_s }{2\pi}
+\]
+$\delta_i$ is the phase diff of two adjacent signals. $\overline{\delta}$ is the average phase diff of all sampled signals.
+$R_s$ is the sampling rate of the system. $f_d$ is the calculated frequency difference.
+\subsection{Time Synchronization and Burst Extraction}
+
+\begin{algorithm}[!t]
+\begin{algorithmic}[1]
+    \STATE $X = $ the synchronization sequence
+    \STATE $Y = $ the received samples
+    \STATE $osr = $ over sampling rate
+    \STATE $c\_start = $ a coarse beginning position of sync. seq. in $Y$
+    \STATE $\delta = $ the searching range
+    \FOR{$i = c\_start-\delta$ to $c\_start+\delta$}
+        \STATE $C[i] = 0$
+        \FOR{$j = 0$ to $|X|$}
+            \STATE $pos = j*osr$
+            \STATE $C[i] = C[i] + X[j]*Y^*[i+pos]$
+        \ENDFOR
+        \STATE $P[i] = $ amplitude of $C[i]$
+    \ENDFOR
+    \STATE $start$ = the position of maximum value in $P$
+    \STATE $start$ is the beginning of synchronization sequence
+\end{algorithmic}
+\caption{Maximum cross correlation algorithm}
+\label{algo_c}
+\end{algorithm}
+The structure of frequency correction burst and synchronization burst can be found in figure \ref{fig:1}. With the adaptive filter,
+the position (both the beginning and ending ) of FCCH frame can be detected. The start of SCH frame will be the next of FCCH frame.
+In figure \ref{fig:2}, by skipping the first 42 bits (3 tail bits and 39 encrypted bits) in SCH frame, we can find 64 bits of synchronization sequence. Because we have not reach time synchronization, we only
+know a coarse number of samples to skip. Algorithm \ref{algo_c} shows the maximum cross correlation algorithm to detect the start point of the synchronization sequence.
+
+
+With maximum value of cross correlation of two signal sequence, the start point of synchronization sequence can be found. Then the start of synchronization burst can be calculated by minusing 42 bits of samples. 
+Then time synchronization is finished.
+
+Normal burst extraction is similar with the procedure of time synchronization. There is a training sequence starting from 62th bits in normal burst. The maximum cross correlation algorithm can be adopted to find the start of training sequence.
+Then the start of the normal burst can be calculated. 
+As we have achieved time synchronization, the searching range can be smaller than that in time synchronization. 
+
+
+\subsection{Use streamed tag for frequency resetting}
+
+As Piot Krysik (perper@o2.pl) said, there is instability in the method of correction of the frequency offset in Airprobe. 
+The reason is the lack of synchronization between computation of frequency offset and its correction inside of FIR filter. 
+As Piot suggests, I will use stream tags to solve this problem. The stream tag with current frequency will be added with the sampled signal.
+When frequency changed, the samples with old frequency tag will be discarded. 
 
 \subsection{Using GNU Radio 3.7 new features}
 \begin{itemize}
-\item The gr-fec package in GNU Radio contains all of the forward error correction (FEC) blocks. It can be utilized as convolution
+\item The gr-fec \cite{grfec} package contains all of the forward error correction (FEC) blocks in GNU Radio. It can be utilized as convolution
 decoder for GSM channel coding.
 
 \item The file sink in GNU Radio starts to support appending content into a file. This feature makes it easier to use with IPC.
@@ -127,12 +178,13 @@ further analysis.
 
 \subsection{The Deliverables list}
 \begin{itemize}
-\item Deliverable 0: Create on out-of-tree module for GSM analysis tool (gr-gsm), using gr-modtool;
-\item Deliverable 1: Data capturing, channelization and resampling with real-time ability;
+\item Deliverable 1: Data capturing, channelization and resampling using algorithm \ref{algo_c} with real-time ability;
 \item Deliverable 2: A Flow Control is completed to control the overall state;
-\item Deliverable 3: Find frequency correction burst (FB) and synchronization burst (SB). Then realize frequency and time synchronization;
-\item Deliverable 4: Decode and decrypt the downlink of 26-frame multiframes for the traffic channel (TCH);
-\item Deliverable 5: Decode and decrypt the downlink of 51-frame multiframes for 5 types of control channels (BCCH, CCCH, SDCCH, ACCH and SCH);
+\item Deliverable 3: Find frequency correction burst (FB). Then realize frequency synchronization;
+\item Deliverable 4: Decode convolution code with gr-fec;
+\item Deliverable 5: Decode and decrypt the downlink of 26-frame multiframes for the traffic channel (TCH);
+\item Deliverable 6: Decode and decrypt the downlink of 51-frame multiframes for 5 types of control channels (BCCH, CCCH, SDCCH, ACCH and SCH);
+\item Deliverable 7: Integrate GSMTap into GSM Analysis Tool.
 \end{itemize}
 
 \section{Schedule}
@@ -142,8 +194,8 @@ As the schedule of GSoC'14 shows, there are 14 weeks including midterm evaluatio
 \item \textbf{2nd Phase (1 week)} : OOT module is created. Data capturing, channelization and resampling is coded. Flow control is coded.
 \item \textbf{3rd Phase (1 week)} : Frequency synchronization and GMSK demodulator is coded.
 \item \textbf{4th Phase (1 week)} : Decoding of convolution codes is implemented.
-\item \textbf{5th Phase (1 week)} : Decoding of SCH is finished. Time synchronization is also implemented.
-\item \textbf{6th Phase (1 week)} : Mid-term evaluation.
+\item \textbf{5th Phase (1 week)} : Time synchronization is implemented. Decoding of SCH is finished. GSMTap is integrated.
+\item \textbf{6th Phase (1 week)} : Buffer period. Mid-term evaluation. 
 \item \textbf{7th Phase (4 weeks)} : Decoding of control channel and traffic channel is finished.
 \item \textbf{8th Phase (1 week)} : GSM Decoder is finished.
 \item \textbf{9th Phase (2 weeks)} : Buffer period. QA test, code clean-up, adding documentation and final submission.
@@ -163,11 +215,11 @@ I'm a fourth year undergraduate in Electronic Information Engineering of Univers
 
 I got to know GNU Radio when I read a paper on cognitive radio which using GNU Radio and a USRP to analyse the algorithm in their paper. Then we bought a USRP to help our group in the research of cognitive radio. My easy access to USRP will help me in finishing the coding of GSM Analysis Tool.\\
 
-On my coding experience, I was an intern in the Alibaba Group which is the biggest e-commerce company in China. I finished 60 percent codes of a Java project called Beacon. It uses Solr as searching engine to catch illegal users. My work was to optimize the searching engine and the coding of the back end. Unfortunately, the codes are under confidential.So I can not publish them to you. I also contributed my codes to an Open Source project SNSAPI (it is a Chinese project). You can find it in my github page: {\color{blue}\url{https://github.com/hzhua/snsapi}}.\\
+On my coding experience, I was an intern in the Alibaba Group which is the biggest e-commerce company in China. I finished 60 percent codes of a Java project called Beacon. It uses Solr as searching engine to catch illegal users. My work was to optimize the searching engine and the coding of the back end. Unfortunately, the codes are under confidential.So I can not publish them to you. I also contributed my codes to an Open Source project SNSAPI (it is a Chinese project). You can find it in my github page\cite{snsapi}.\\
 
 As this is the biggest project I have dealt with, it may be a challenging task for me to complete in the given time span. If I cannot finish GSM Analysis Tool in 14 weeks, I will continue my works even after GSoC. For my personal motivation, I will continue my research on wireless networks during my PhD degree. Therefore I will use GNU Radio and USRP as powerful tools for many years. I would love to continue learning and working in GNU Radio community after GSoC. So, don't worry about if I will disappear during GSoC.\\
 
-Please visit my personal page {\color{blue}{\url{https://hzhua.github.io}}} if you want to know me better. You can find my CV there.
+Please visit my personal page\cite{personal} if you want to know me better. You can find my CV there.
 
 I agree for my work to be published under the GPL license.
 
